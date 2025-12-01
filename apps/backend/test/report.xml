@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="0" failures="5" skipped="12" tests="17" time="49.419" timestamp="2025-08-27T00:45:12.361895+05:30" hostname="DESKTOP-1II8V07"><testcase classname="test_admin_features.TestAdminFeatures" name="test_admin_login" time="8.635"><skipped type="pytest.skip" message="Chrome browser not installed. Please install Chrome to run Selenium tests.">D:\Consent_Manager\go-server\test\test_admin_features.py:11: Chrome browser not installed. Please install Chrome to run Selenium tests.</skipped></testcase><testcase classname="test_admin_features.TestAdminFeatures" name="test_create_consent_form" time="0.001"><skipped type="pytest.skip" message="Chrome browser not installed. Please install Chrome to run Selenium tests.">D:\Consent_Manager\go-server\test\test_admin_features.py:34: Chrome browser not installed. Please install Chrome to run Selenium tests.</skipped></testcase><testcase classname="test_admin_features.TestAdminFeatures" name="test_manage_api_keys" time="0.001"><skipped type="pytest.skip" message="Chrome browser not installed. Please install Chrome to run Selenium tests.">D:\Consent_Manager\go-server\test\test_admin_features.py:87: Chrome browser not installed. Please install Chrome to run Selenium tests.</skipped></testcase><testcase classname="test_admin_features.TestAdminFeatures" name="test_view_integration_script" time="0.001"><skipped type="pytest.skip" message="Chrome browser not installed. Please install Chrome to run Selenium tests.">D:\Consent_Manager\go-server\test\test_admin_features.py:122: Chrome browser not installed. Please install Chrome to run Selenium tests.</skipped></testcase><testcase classname="test_api_integration.TestAPIIntegration" name="test_api_key_authentication" time="4.026"><failure message="requests.exceptions.ConnectionError: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /api/v1/public/consent-forms (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x0000011CD4B10B90&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))">C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connection.py:198: in _new_conn
+    sock = connection.create_connection(
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\util\connection.py:85: in create_connection
+    raise err
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\util\connection.py:73: in create_connection
+    sock.connect(sa)
+E   ConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it
+
+The above exception was the direct cause of the following exception:
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connectionpool.py:787: in urlopen
+    response = self._make_request(
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connectionpool.py:493: in _make_request
+    conn.request(
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connection.py:494: in request
+    self.endheaders()
+C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.2032.0_x64__qbz5n2kfra8p0\Lib\http\client.py:1333: in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.2032.0_x64__qbz5n2kfra8p0\Lib\http\client.py:1093: in _send_output
+    self.send(msg)
+C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.2032.0_x64__qbz5n2kfra8p0\Lib\http\client.py:1037: in send
+    self.connect()
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connection.py:325: in connect
+    self.sock = self._new_conn()
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connection.py:213: in _new_conn
+    raise NewConnectionError(
+E   urllib3.exceptions.NewConnectionError: &lt;urllib3.connection.HTTPConnection object at 0x0000011CD4B10B90&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it
+
+The above exception was the direct cause of the following exception:
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\adapters.py:667: in send
+    resp = conn.urlopen(
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connectionpool.py:841: in urlopen
+    retries = retries.increment(
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\util\retry.py:519: in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+E   urllib3.exceptions.MaxRetryError: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /api/v1/public/consent-forms (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x0000011CD4B10B90&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+
+During handling of the above exception, another exception occurred:
+test_api_integration.py:18: in test_api_key_authentication
+    response = requests.get(f"{api_base_url}/api/v1/public/consent-forms")
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\api.py:73: in get
+    return request("get", url, params=params, **kwargs)
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\api.py:59: in request
+    return session.request(method=method, url=url, **kwargs)
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\sessions.py:589: in request
+    resp = self.send(prep, **send_kwargs)
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\sessions.py:703: in send
+    r = adapter.send(request, **kwargs)
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\adapters.py:700: in send
+    raise ConnectionError(e, request=request)
+E   requests.exceptions.ConnectionError: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /api/v1/public/consent-forms (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x0000011CD4B10B90&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))</failure></testcase><testcase classname="test_api_integration.TestAPIIntegration" name="test_public_consent_form_access_via_api" time="4.052"><failure message="AssertionError: API endpoint not accessible&#10;assert False">C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connection.py:198: in _new_conn
+    sock = connection.create_connection(
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\util\connection.py:85: in create_connection
+    raise err
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\util\connection.py:73: in create_connection
+    sock.connect(sa)
+E   ConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it
+
+The above exception was the direct cause of the following exception:
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connectionpool.py:787: in urlopen
+    response = self._make_request(
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connectionpool.py:493: in _make_request
+    conn.request(
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connection.py:494: in request
+    self.endheaders()
+C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.2032.0_x64__qbz5n2kfra8p0\Lib\http\client.py:1333: in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.2032.0_x64__qbz5n2kfra8p0\Lib\http\client.py:1093: in _send_output
+    self.send(msg)
+C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.2032.0_x64__qbz5n2kfra8p0\Lib\http\client.py:1037: in send
+    self.connect()
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connection.py:325: in connect
+    self.sock = self._new_conn()
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connection.py:213: in _new_conn
+    raise NewConnectionError(
+E   urllib3.exceptions.NewConnectionError: &lt;urllib3.connection.HTTPConnection object at 0x0000011CD4AB39D0&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it
+
+The above exception was the direct cause of the following exception:
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\adapters.py:667: in send
+    resp = conn.urlopen(
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connectionpool.py:841: in urlopen
+    retries = retries.increment(
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\util\retry.py:519: in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+E   urllib3.exceptions.MaxRetryError: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /api/v1/public/consent-forms/12345 (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x0000011CD4AB39D0&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+
+During handling of the above exception, another exception occurred:
+test_api_integration.py:33: in test_public_consent_form_access_via_api
+    response = requests.get(f"{api_base_url}/api/v1/public/consent-forms/12345",
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\api.py:73: in get
+    return request("get", url, params=params, **kwargs)
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\api.py:59: in request
+    return session.request(method=method, url=url, **kwargs)
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\sessions.py:589: in request
+    resp = self.send(prep, **send_kwargs)
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\sessions.py:703: in send
+    r = adapter.send(request, **kwargs)
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\adapters.py:700: in send
+    raise ConnectionError(e, request=request)
+E   requests.exceptions.ConnectionError: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /api/v1/public/consent-forms/12345 (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x0000011CD4AB39D0&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+
+During handling of the above exception, another exception occurred:
+test_api_integration.py:39: in test_public_consent_form_access_via_api
+    assert False, "API endpoint not accessible"
+E   AssertionError: API endpoint not accessible
+E   assert False</failure></testcase><testcase classname="test_api_integration.TestAPIIntegration" name="test_third_party_integration_script" time="4.053"><failure message="AssertionError: Integration script endpoint not accessible&#10;assert False">C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connection.py:198: in _new_conn
+    sock = connection.create_connection(
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\util\connection.py:85: in create_connection
+    raise err
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\util\connection.py:73: in create_connection
+    sock.connect(sa)
+E   ConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it
+
+The above exception was the direct cause of the following exception:
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connectionpool.py:787: in urlopen
+    response = self._make_request(
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connectionpool.py:493: in _make_request
+    conn.request(
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connection.py:494: in request
+    self.endheaders()
+C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.2032.0_x64__qbz5n2kfra8p0\Lib\http\client.py:1333: in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.2032.0_x64__qbz5n2kfra8p0\Lib\http\client.py:1093: in _send_output
+    self.send(msg)
+C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.2032.0_x64__qbz5n2kfra8p0\Lib\http\client.py:1037: in send
+    self.connect()
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connection.py:325: in connect
+    self.sock = self._new_conn()
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connection.py:213: in _new_conn
+    raise NewConnectionError(
+E   urllib3.exceptions.NewConnectionError: &lt;urllib3.connection.HTTPConnection object at 0x0000011CD4AFDA70&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it
+
+The above exception was the direct cause of the following exception:
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\adapters.py:667: in send
+    resp = conn.urlopen(
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connectionpool.py:841: in urlopen
+    retries = retries.increment(
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\util\retry.py:519: in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+E   urllib3.exceptions.MaxRetryError: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /api/v1/fiduciary/consent-forms/12345/integration (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x0000011CD4AFDA70&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+
+During handling of the above exception, another exception occurred:
+test_api_integration.py:46: in test_third_party_integration_script
+    response = requests.get(f"{api_base_url}/api/v1/fiduciary/consent-forms/12345/integration")
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\api.py:73: in get
+    return request("get", url, params=params, **kwargs)
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\api.py:59: in request
+    return session.request(method=method, url=url, **kwargs)
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\sessions.py:589: in request
+    resp = self.send(prep, **send_kwargs)
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\sessions.py:703: in send
+    r = adapter.send(request, **kwargs)
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\adapters.py:700: in send
+    raise ConnectionError(e, request=request)
+E   requests.exceptions.ConnectionError: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /api/v1/fiduciary/consent-forms/12345/integration (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x0000011CD4AFDA70&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+
+During handling of the above exception, another exception occurred:
+test_api_integration.py:52: in test_third_party_integration_script
+    assert False, "Integration script endpoint not accessible"
+E   AssertionError: Integration script endpoint not accessible
+E   assert False</failure></testcase><testcase classname="test_api_integration.TestAPIIntegration" name="test_user_consent_submission_via_api" time="4.051"><failure message="AssertionError: User consent endpoint not accessible&#10;assert False">C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connection.py:198: in _new_conn
+    sock = connection.create_connection(
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\util\connection.py:85: in create_connection
+    raise err
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\util\connection.py:73: in create_connection
+    sock.connect(sa)
+E   ConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it
+
+The above exception was the direct cause of the following exception:
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connectionpool.py:787: in urlopen
+    response = self._make_request(
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connectionpool.py:493: in _make_request
+    conn.request(
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connection.py:494: in request
+    self.endheaders()
+C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.2032.0_x64__qbz5n2kfra8p0\Lib\http\client.py:1333: in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.2032.0_x64__qbz5n2kfra8p0\Lib\http\client.py:1093: in _send_output
+    self.send(msg)
+C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.2032.0_x64__qbz5n2kfra8p0\Lib\http\client.py:1037: in send
+    self.connect()
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connection.py:325: in connect
+    self.sock = self._new_conn()
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connection.py:213: in _new_conn
+    raise NewConnectionError(
+E   urllib3.exceptions.NewConnectionError: &lt;urllib3.connection.HTTPConnection object at 0x0000011CD4AFDBA0&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it
+
+The above exception was the direct cause of the following exception:
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\adapters.py:667: in send
+    resp = conn.urlopen(
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connectionpool.py:841: in urlopen
+    retries = retries.increment(
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\util\retry.py:519: in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+E   urllib3.exceptions.MaxRetryError: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /api/v1/user/consents (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x0000011CD4AFDBA0&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+
+During handling of the above exception, another exception occurred:
+test_api_integration.py:59: in test_user_consent_submission_via_api
+    response = requests.post(f"{api_base_url}/api/v1/user/consents",
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\api.py:115: in post
+    return request("post", url, data=data, json=json, **kwargs)
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\api.py:59: in request
+    return session.request(method=method, url=url, **kwargs)
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\sessions.py:589: in request
+    resp = self.send(prep, **send_kwargs)
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\sessions.py:703: in send
+    r = adapter.send(request, **kwargs)
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\adapters.py:700: in send
+    raise ConnectionError(e, request=request)
+E   requests.exceptions.ConnectionError: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /api/v1/user/consents (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x0000011CD4AFDBA0&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+
+During handling of the above exception, another exception occurred:
+test_api_integration.py:66: in test_user_consent_submission_via_api
+    assert False, "User consent endpoint not accessible"
+E   AssertionError: User consent endpoint not accessible
+E   assert False</failure></testcase><testcase classname="test_api_integration.TestAPIIntegration" name="test_cross_origin_resource_sharing" time="4.061"><failure message="AssertionError: API endpoint not accessible for CORS testing&#10;assert False">C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connection.py:198: in _new_conn
+    sock = connection.create_connection(
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\util\connection.py:85: in create_connection
+    raise err
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\util\connection.py:73: in create_connection
+    sock.connect(sa)
+E   ConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it
+
+The above exception was the direct cause of the following exception:
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connectionpool.py:787: in urlopen
+    response = self._make_request(
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connectionpool.py:493: in _make_request
+    conn.request(
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connection.py:494: in request
+    self.endheaders()
+C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.2032.0_x64__qbz5n2kfra8p0\Lib\http\client.py:1333: in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.2032.0_x64__qbz5n2kfra8p0\Lib\http\client.py:1093: in _send_output
+    self.send(msg)
+C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.2032.0_x64__qbz5n2kfra8p0\Lib\http\client.py:1037: in send
+    self.connect()
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connection.py:325: in connect
+    self.sock = self._new_conn()
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connection.py:213: in _new_conn
+    raise NewConnectionError(
+E   urllib3.exceptions.NewConnectionError: &lt;urllib3.connection.HTTPConnection object at 0x0000011CD4AF2E70&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it
+
+The above exception was the direct cause of the following exception:
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\adapters.py:667: in send
+    resp = conn.urlopen(
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\connectionpool.py:841: in urlopen
+    retries = retries.increment(
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\urllib3\util\retry.py:519: in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+E   urllib3.exceptions.MaxRetryError: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /api/v1/public/consent-forms (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x0000011CD4AF2E70&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+
+During handling of the above exception, another exception occurred:
+test_api_integration.py:72: in test_cross_origin_resource_sharing
+    response = requests.options(f"{api_base_url}/api/v1/public/consent-forms")
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\api.py:85: in options
+    return request("options", url, **kwargs)
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\api.py:59: in request
+    return session.request(method=method, url=url, **kwargs)
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\sessions.py:589: in request
+    resp = self.send(prep, **send_kwargs)
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\sessions.py:703: in send
+    r = adapter.send(request, **kwargs)
+C:\Users\prath\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\requests\adapters.py:700: in send
+    raise ConnectionError(e, request=request)
+E   requests.exceptions.ConnectionError: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /api/v1/public/consent-forms (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x0000011CD4AF2E70&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+
+During handling of the above exception, another exception occurred:
+test_api_integration.py:78: in test_cross_origin_resource_sharing
+    assert False, "API endpoint not accessible for CORS testing"
+E   AssertionError: API endpoint not accessible for CORS testing
+E   assert False</failure></testcase><testcase classname="test_data_management.TestTestDataManagement" name="test_create_test_user" time="4.038"><skipped type="pytest.skip" message="Could not authenticate as admin">D:\Consent_Manager\go-server\test\test_data_management.py:42: Could not authenticate as admin</skipped></testcase><testcase classname="test_data_management.TestTestDataManagement" name="test_create_test_consent_form" time="4.064"><skipped type="pytest.skip" message="Could not authenticate as admin">D:\Consent_Manager\go-server\test\test_data_management.py:69: Could not authenticate as admin</skipped></testcase><testcase classname="test_data_management.TestTestDataManagement" name="test_create_test_api_key" time="4.064"><skipped type="pytest.skip" message="Could not authenticate as admin">D:\Consent_Manager\go-server\test\test_data_management.py:102: Could not authenticate as admin</skipped></testcase><testcase classname="test_selenium_setup" name="test_selenium_setup" time="7.248"><skipped type="pytest.skip" message="Chrome browser not installed. Please install Chrome to run Selenium tests.">D:\Consent_Manager\go-server\test\test_selenium_setup.py:39: Chrome browser not installed. Please install Chrome to run Selenium tests.</skipped></testcase><testcase classname="test_user_features.TestUserFeatures" name="test_user_login" time="0.001"><skipped type="pytest.skip" message="Chrome browser not installed. Please install Chrome to run Selenium tests.">D:\Consent_Manager\go-server\test\test_user_features.py:11: Chrome browser not installed. Please install Chrome to run Selenium tests.</skipped></testcase><testcase classname="test_user_features.TestUserFeatures" name="test_view_user_consents" time="0.001"><skipped type="pytest.skip" message="Chrome browser not installed. Please install Chrome to run Selenium tests.">D:\Consent_Manager\go-server\test\test_user_features.py:34: Chrome browser not installed. Please install Chrome to run Selenium tests.</skipped></testcase><testcase classname="test_user_features.TestUserFeatures" name="test_submit_consent" time="0.001"><skipped type="pytest.skip" message="Chrome browser not installed. Please install Chrome to run Selenium tests.">D:\Consent_Manager\go-server\test\test_user_features.py:64: Chrome browser not installed. Please install Chrome to run Selenium tests.</skipped></testcase><testcase classname="test_user_features.TestUserFeatures" name="test_user_cannot_access_admin_features" time="0.001"><skipped type="pytest.skip" message="Chrome browser not installed. Please install Chrome to run Selenium tests.">D:\Consent_Manager\go-server\test\test_user_features.py:111: Chrome browser not installed. Please install Chrome to run Selenium tests.</skipped></testcase></testsuite></testsuites>

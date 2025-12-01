@@ -1,0 +1,1079 @@
+(function() {
+  'use strict';
+  
+  // Configuration injected at generation time
+  const CONFIG = {
+    apiEndpoint: '{{.APIEndpoint}}',
+    tenantId: '{{.TenantID}}',
+    formId: '{{.FormID}}',
+    theme: {{.Theme}},
+    position: '{{.Position}}',
+    language: '{{.Language}}',
+    autoShow: {{.AutoShow}},
+    showPreferenceCenter: {{.ShowPreferenceCenter}},
+    cookieExpiry: {{.CookieExpiry}}
+  };
+  
+  // Cookie Blocker class
+  class CookieBlocker {
+    constructor(consentManager) {
+      this.consentManager = consentManager;
+      this.allowedCookies = new Set();
+      this.originalCookieDescriptor = null;
+      this.init();
+    }
+    
+    init() {
+      this.setupCookieInterception();
+      this.loadAllowedCookies();
+    }
+    
+    async loadAllowedCookies() {
+      try {
+        const response = await fetch(`${this.consentManager.config.apiEndpoint}/api/v1/public/cookies/${this.consentManager.config.tenantId}`);
+        if (response.ok) {
+          const data = await response.json();
+          data.cookies.forEach(cookie => {
+            this.allowedCookies.add(`${cookie.name}:${cookie.domain}`);
+          });
+        }
+      } catch (error) {
+        console.warn('Failed to load allowed cookies:', error);
+      }
+    }
+    
+    setupCookieInterception() {
+      if (this.originalCookieDescriptor) return;
+      
+      this.originalCookieDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie');
+      
+      if (this.originalCookieDescriptor && this.originalCookieDescriptor.set) {
+        const originalSetter = this.originalCookieDescriptor.set;
+        const self = this;
+        
+        Object.defineProperty(document, 'cookie', {
+          get: this.originalCookieDescriptor.get,
+          set: function(value) {
+            if (self.shouldAllowCookie(value)) {
+              originalSetter.call(document, value);
+            } else {
+              console.warn('ARC Consent: Cookie blocked:', value.split('=')[0]);
+            }
+          },
+          configurable: true
+        });
+      }
+    }
+    
+    shouldAllowCookie(cookieString) {
+      if (!this.consentManager.consent) {
+        return this.isNecessaryCookie(cookieString);
+      }
+      
+      const cookieName = cookieString.split('=')[0].trim();
+      const domain = window.location.hostname;
+      const cookieKey = `${cookieName}:${domain}`;
+      
+      // Always allow necessary cookies
+      if (this.isNecessaryCookie(cookieString)) {
+        return true;
+      }
+      
+      // Check if cookie is in allowed list and user has consented
+      return this.allowedCookies.has(cookieKey) && this.hasConsentForCookie(cookieName);
+    }
+    
+    hasConsentForCookie(cookieName) {
+      if (!this.consentManager.consent || !this.consentManager.consent.purposes) {
+        return false;
+      }
+      
+      // This is a simplified check - in practice, you'd map cookies to purposes
+      return this.consentManager.consent.purposes.some(purpose => purpose.consented);
+    }
+    
+    isNecessaryCookie(cookieString) {
+      const necessaryCookies = [
+        'session', 'csrf', 'xsrf', 'auth', 'security', 'arc_consent',
+        '__Secure-', '__Host-', 'PHPSESSID', 'JSESSIONID', 'connect.sid'
+      ];
+      
+      const cookieName = cookieString.split('=')[0].trim().toLowerCase();
+      return necessaryCookies.some(name => cookieName.includes(name.toLowerCase()));
+    }
+    
+    cleanupNonConsentedCookies() {
+      if (!this.consentManager.consent) return;
+      
+      // Get all cookies and remove non-consented ones
+      const cookies = document.cookie.split(';');
+      cookies.forEach(cookie => {
+        const cookieName = cookie.split('=')[0].trim();
+        if (!this.shouldAllowCookie(cookie) && !this.isNecessaryCookie(cookie)) {
+          // Delete the cookie
+          document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+          document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+          document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${window.location.hostname};`;
+        }
+      });
+    }
+    
+    restoreCookieAccess() {
+      if (this.originalCookieDescriptor) {
+        Object.defineProperty(document, 'cookie', this.originalCookieDescriptor);
+        this.originalCookieDescriptor = null;
+      }
+    }
+  }
+
+  // Consent Manager SDK
+  class ConsentManager {
+    constructor(config) {
+      this.config = config;
+      this.consent = this.loadConsent();
+      this.formData = null;
+      this.cookieBlocker = null;
+      this.init();
+    }
+    
+    async init() {
+      try {
+        // Initialize cookie blocker first
+        this.cookieBlocker = new CookieBlocker(this);
+        
+        await this.fetchFormData();
+        
+        // Detect Language
+        this.currentLanguage = this.config.language || navigator.language.split('-')[0];
+        if (this.formData.translations && this.formData.translations[this.currentLanguage]) {
+            console.log('ARC Consent: Using language', this.currentLanguage);
+        }
+
+        // Detect Region (Enterprise Feature)
+        // In a real deployment, this should be done via a backend proxy or a paid GeoIP service.
+        // For now, we allow the host to inject the region or default to 'unknown'.
+        this.userRegion = window.ARC_USER_REGION || 'unknown';
+        
+        if (this.shouldShowForRegion()) {
+            this.injectStyles();
+            this.createBanner();
+            if (this.config.showPreferenceCenter) {
+              this.createPreferenceCenter();
+            }
+            if (this.config.autoShow && !this.consent) {
+              this.showBanner();
+            }
+            this.setupEventListeners();
+            
+            // Clean up non-consented cookies if user has already given consent
+            if (this.consent) {
+              this.cookieBlocker.cleanupNonConsentedCookies();
+            }
+            
+            this.scanForBindings();
+        } else {
+            console.log('ARC Consent: Form not applicable for region', this.userRegion);
+        }
+      } catch (error) {
+        console.error('ARC Consent SDK initialization failed:', error);
+      }
+    }
+
+    shouldShowForRegion() {
+        if (!this.formData.regions || this.formData.regions.length === 0) {
+            return true; // No restrictions
+        }
+        // If region is unknown, we usually default to showing (safe fail)
+        if (this.userRegion === 'unknown') return true;
+        return this.formData.regions.includes(this.userRegion);
+    }
+
+    setLanguage(lang) {
+        this.currentLanguage = lang;
+        // Re-render
+        const banner = document.getElementById('arc-consent-banner');
+        if (banner) banner.remove();
+        const prefs = document.getElementById('arc-preference-center');
+        if (prefs) prefs.remove();
+        
+        this.createBanner();
+        if (this.config.showPreferenceCenter) {
+            this.createPreferenceCenter();
+        }
+        if (!this.consent) {
+            this.showBanner();
+        }
+        this.setupEventListeners();
+    }
+
+    getText(key, defaultText) {
+        if (this.formData.translations && 
+            this.formData.translations[this.currentLanguage] && 
+            this.formData.translations[this.currentLanguage][key]) {
+            return this.formData.translations[this.currentLanguage][key];
+        }
+        return defaultText;
+    }
+    
+    loadConsent() {
+      try {
+        const stored = localStorage.getItem('arc_consent');
+        if (stored) {
+          const consent = JSON.parse(stored);
+          // Check if consent is still valid
+          if (consent.formId === this.config.formId && consent.timestamp) {
+            const expiryDate = new Date(consent.timestamp);
+            expiryDate.setDate(expiryDate.getDate() + this.config.cookieExpiry);
+            if (new Date() < expiryDate) {
+              return consent;
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load consent:', error);
+      }
+      return null;
+    }
+    
+    saveConsent(purposes) {
+      const consent = {
+        purposes: purposes,
+        timestamp: new Date().toISOString(),
+        formId: this.config.formId,
+        tenantId: this.config.tenantId
+      };
+      
+      try {
+        localStorage.setItem('arc_consent', JSON.stringify(consent));
+        this.consent = consent;
+        this.submitToBackend(consent);
+        this.dispatchConsentEvent('consent-updated', consent);
+        return consent;
+      } catch (error) {
+        console.error('Failed to save consent:', error);
+        return null;
+      }
+    }
+    
+    async submitToBackend(consent) {
+      try {
+        const response = await fetch(`${this.config.apiEndpoint}/api/v1/public/consent`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-Tenant-ID': this.config.tenantId
+          },
+          body: JSON.stringify({
+            tenantId: this.config.tenantId,
+            formId: this.config.formId,
+            purposes: consent.purposes,
+            userAgent: navigator.userAgent,
+            ipAddress: await this.getClientIP()
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        return await response.json();
+      } catch (error) {
+        console.error('Failed to submit consent to backend:', error);
+        throw error;
+      }
+    }
+    
+    async getClientIP() {
+      try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        return data.ip;
+      } catch (error) {
+        return 'unknown';
+      }
+    }
+    
+    showBanner() {
+      const banner = document.getElementById('arc-consent-banner');
+      if (banner) {
+        banner.style.display = 'block';
+        banner.setAttribute('aria-hidden', 'false');
+        this.dispatchConsentEvent('banner-shown');
+      }
+    }
+    
+    hideBanner() {
+      const banner = document.getElementById('arc-consent-banner');
+      if (banner) {
+        banner.style.display = 'none';
+        banner.setAttribute('aria-hidden', 'true');
+        this.dispatchConsentEvent('banner-hidden');
+      }
+    }
+    
+    showPreferenceCenter() {
+      const modal = document.getElementById('arc-preference-center');
+      if (modal) {
+        modal.style.display = 'flex';
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        this.dispatchConsentEvent('preference-center-opened');
+        
+        // Focus management for accessibility
+        const firstFocusable = modal.querySelector('button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        if (firstFocusable) {
+          firstFocusable.focus();
+        }
+      }
+    }
+    
+    hidePreferenceCenter() {
+      const modal = document.getElementById('arc-preference-center');
+      if (modal) {
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        this.dispatchConsentEvent('preference-center-closed');
+      }
+    }
+    
+    acceptAll() {
+      if (!this.formData) return;
+      
+      const purposes = this.formData.purposes.map(p => ({
+        purposeId: p.id,
+        consented: true
+      }));
+      
+      this.saveConsent(purposes);
+      this.hideBanner();
+      this.unblockCookies();
+      this.dispatchConsentEvent('consent-accepted-all');
+    }
+    
+    rejectAll() {
+      if (!this.formData) return;
+      
+      const purposes = this.formData.purposes
+        .filter(p => p.required)
+        .map(p => ({
+          purposeId: p.id,
+          consented: true
+        }));
+      
+      this.saveConsent(purposes);
+      this.hideBanner();
+      this.dispatchConsentEvent('consent-rejected-all');
+    }
+    
+    async fetchFormData() {
+      try {
+        const response = await fetch(
+          `${this.config.apiEndpoint}/api/v1/public/consent-forms/${this.config.formId}`,
+          {
+            headers: {
+              'X-Tenant-ID': this.config.tenantId
+            }
+          }
+        );
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        this.formData = await response.json();
+        return this.formData;
+      } catch (error) {
+        console.error('Failed to fetch form data:', error);
+        throw error;
+      }
+    }
+    
+    blockCookies() {
+      if (this.consent) return; // Already consented, don't block
+      
+      // Store original cookie descriptor
+      const originalCookieDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie');
+      
+      if (originalCookieDescriptor && originalCookieDescriptor.set) {
+        const originalSetCookie = originalCookieDescriptor.set;
+        
+        Object.defineProperty(document, 'cookie', {
+          set: function(value) {
+            if (this.isNecessaryCookie(value)) {
+              originalSetCookie.call(document, value);
+            } else {
+              console.warn('ARC Consent: Cookie blocked until consent given:', value);
+            }
+          }.bind(this),
+          get: originalCookieDescriptor.get,
+          configurable: true
+        });
+      }
+    }
+    
+    unblockCookies() {
+      // Update cookie blocker with new consent
+      if (this.cookieBlocker) {
+        this.cookieBlocker.loadAllowedCookies();
+      }
+      
+      // Optionally reload the page to ensure all scripts can set their cookies
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
+    }
+    
+    isNecessaryCookie(cookieString) {
+      const necessaryCookies = [
+        'session', 'csrf', 'auth', 'security', 'arc_consent',
+        '__Secure-', '__Host-', 'PHPSESSID', 'JSESSIONID'
+      ];
+      
+      const cookieName = cookieString.split('=')[0].trim();
+      return necessaryCookies.some(name => cookieName.startsWith(name));
+    }
+    
+    injectStyles() {
+      if (document.getElementById('arc-consent-styles')) return;
+      
+      const style = document.createElement('style');
+      style.id = 'arc-consent-styles';
+      style.textContent = this.generateCSS();
+      document.head.appendChild(style);
+    }
+    
+    generateCSS() {
+      const theme = this.config.theme;
+      return `
+        /* ARC Consent SDK Styles */
+        #arc-consent-banner {
+          position: fixed;
+          ${this.getPositionStyles()}
+          background: #ffffff;
+          border: 1px solid #e0e0e0;
+          border-radius: ${theme.borderRadius || 8}px;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+          padding: 20px;
+          max-width: 400px;
+          z-index: 999999;
+          font-family: ${theme.fontFamily || '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'};
+          font-size: 14px;
+          line-height: 1.5;
+          color: #333;
+          display: none;
+        }
+        
+        #arc-consent-banner h3 {
+          margin: 0 0 12px 0;
+          font-size: 16px;
+          font-weight: 600;
+          color: #1a1a1a;
+        }
+        
+        #arc-consent-banner p {
+          margin: 0 0 16px 0;
+          color: #666;
+        }
+        
+        .arc-button-group {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+        
+        .arc-btn {
+          padding: 10px 16px;
+          border: none;
+          border-radius: ${theme.borderRadius || 8}px;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          font-family: inherit;
+          text-decoration: none;
+          display: inline-block;
+          text-align: center;
+        }
+        
+        .arc-btn-primary {
+          background: ${theme.primaryColor || '#007bff'};
+          color: white;
+        }
+        
+        .arc-btn-primary:hover {
+          background: ${this.darkenColor(theme.primaryColor || '#007bff', 10)};
+        }
+        
+        .arc-btn-secondary {
+          background: ${theme.secondaryColor || '#6c757d'};
+          color: white;
+        }
+        
+        .arc-btn-secondary:hover {
+          background: ${this.darkenColor(theme.secondaryColor || '#6c757d', 10)};
+        }
+        
+        .arc-btn-outline {
+          background: transparent;
+          border: 1px solid ${theme.primaryColor || '#007bff'};
+          color: ${theme.primaryColor || '#007bff'};
+        }
+        
+        .arc-btn-outline:hover {
+          background: ${theme.primaryColor || '#007bff'};
+          color: white;
+        }
+        
+        /* Preference Center Modal */
+        #arc-preference-center {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.5);
+          display: none;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000000;
+          font-family: ${theme.fontFamily || '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'};
+        }
+        
+        .arc-modal-content {
+          background: white;
+          border-radius: ${theme.borderRadius || 8}px;
+          padding: 24px;
+          max-width: 600px;
+          max-height: 80vh;
+          overflow-y: auto;
+          margin: 20px;
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+        
+        .arc-modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 20px;
+          padding-bottom: 16px;
+          border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .arc-modal-title {
+          font-size: 20px;
+          font-weight: 600;
+          margin: 0;
+          color: #1a1a1a;
+        }
+        
+        .arc-close-btn {
+          background: none;
+          border: none;
+          font-size: 24px;
+          cursor: pointer;
+          color: #666;
+          padding: 0;
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+        }
+        
+        .arc-close-btn:hover {
+          background: #f0f0f0;
+        }
+        
+        .arc-purpose-item {
+          padding: 16px 0;
+          border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .arc-purpose-item:last-child {
+          border-bottom: none;
+        }
+        
+        .arc-purpose-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 8px;
+        }
+        
+        .arc-purpose-title {
+          font-weight: 600;
+          color: #1a1a1a;
+          margin: 0;
+        }
+        
+        .arc-purpose-description {
+          color: #666;
+          margin: 0;
+          font-size: 13px;
+        }
+        
+        .arc-toggle {
+          position: relative;
+          display: inline-block;
+          width: 44px;
+          height: 24px;
+        }
+        
+        .arc-toggle input {
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+        
+        .arc-toggle-slider {
+          position: absolute;
+          cursor: pointer;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: #ccc;
+          transition: 0.2s;
+          border-radius: 24px;
+        }
+        
+        .arc-toggle-slider:before {
+          position: absolute;
+          content: "";
+          height: 18px;
+          width: 18px;
+          left: 3px;
+          bottom: 3px;
+          background-color: white;
+          transition: 0.2s;
+          border-radius: 50%;
+        }
+        
+        .arc-toggle input:checked + .arc-toggle-slider {
+          background-color: ${theme.primaryColor || '#007bff'};
+        }
+        
+        .arc-toggle input:checked + .arc-toggle-slider:before {
+          transform: translateX(20px);
+        }
+        
+        .arc-modal-footer {
+          display: flex;
+          gap: 12px;
+          justify-content: flex-end;
+          margin-top: 24px;
+          padding-top: 16px;
+          border-top: 1px solid #e0e0e0;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+          #arc-consent-banner {
+            left: 10px !important;
+            right: 10px !important;
+            bottom: 10px !important;
+            max-width: none;
+            width: auto;
+          }
+          
+          .arc-modal-content {
+            margin: 10px;
+            max-height: 90vh;
+          }
+          
+          .arc-button-group {
+            flex-direction: column;
+          }
+          
+          .arc-btn {
+            width: 100%;
+            text-align: center;
+          }
+        }
+        
+        /* Accessibility */
+        .arc-btn:focus,
+        .arc-toggle input:focus + .arc-toggle-slider,
+        .arc-close-btn:focus {
+          outline: 2px solid ${theme.primaryColor || '#007bff'};
+          outline-offset: 2px;
+        }
+        
+        /* Custom CSS */
+        ${this.config.customCSS || ''}
+      `;
+    }
+    
+    getPositionStyles() {
+      switch (this.config.position) {
+        case 'top':
+          return 'top: 20px; left: 50%; transform: translateX(-50%);';
+        case 'bottom':
+          return 'bottom: 20px; left: 50%; transform: translateX(-50%);';
+        case 'left':
+          return 'left: 20px; top: 50%; transform: translateY(-50%);';
+        case 'right':
+          return 'right: 20px; top: 50%; transform: translateY(-50%);';
+        case 'center':
+          return 'top: 50%; left: 50%; transform: translate(-50%, -50%);';
+        default:
+          return 'bottom: 20px; right: 20px;';
+      }
+    }
+    
+    darkenColor(color, percent) {
+      const num = parseInt(color.replace("#", ""), 16);
+      const amt = Math.round(2.55 * percent);
+      const R = (num >> 16) - amt;
+      const G = (num >> 8 & 0x00FF) - amt;
+      const B = (num & 0x0000FF) - amt;
+      return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+        (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+        (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+    }
+    
+    createBanner() {
+      if (document.getElementById('arc-consent-banner')) return;
+      
+      const banner = document.createElement('div');
+      banner.id = 'arc-consent-banner';
+      banner.setAttribute('role', 'dialog');
+      banner.setAttribute('aria-labelledby', 'arc-banner-title');
+      banner.setAttribute('aria-describedby', 'arc-banner-description');
+      banner.setAttribute('aria-hidden', 'true');
+      
+      const title = this.getText('title', this.formData?.title || 'Cookie Consent');
+      const description = this.getText('description', this.formData?.description || 'We use cookies to enhance your experience. Please choose your preferences.');
+      const acceptText = this.getText('acceptAll', 'Accept All');
+      const rejectText = this.getText('rejectAll', 'Reject All');
+      const customizeText = this.getText('customize', 'Customize');
+      
+      // Language Selector
+      let langSelector = '';
+      if (this.formData.translations && Object.keys(this.formData.translations).length > 0) {
+          const langs = Object.keys(this.formData.translations);
+          // Add default language (en) if not present
+          if (!langs.includes('en')) langs.unshift('en');
+          
+          const options = langs.map(l => 
+              `<option value="${l}" ${this.currentLanguage === l ? 'selected' : ''}>${l.toUpperCase()}</option>`
+          ).join('');
+          
+          langSelector = `
+            <div class="arc-lang-selector">
+                <select id="arc-lang-select" aria-label="Select Language">
+                    ${options}
+                </select>
+            </div>
+          `;
+      }
+
+      banner.innerHTML = `
+        <div class="arc-banner-header">
+            <h3 id="arc-banner-title">${this.escapeHtml(title)}</h3>
+            ${langSelector}
+        </div>
+        <p id="arc-banner-description">${this.escapeHtml(description)}</p>
+        <div class="arc-button-group">
+          <button id="arc-accept-all" class="arc-btn arc-btn-primary" aria-label="${this.escapeHtml(acceptText)}">
+            ${this.escapeHtml(acceptText)}
+          </button>
+          <button id="arc-reject-all" class="arc-btn arc-btn-secondary" aria-label="${this.escapeHtml(rejectText)}">
+            ${this.escapeHtml(rejectText)}
+          </button>
+          ${this.config.showPreferenceCenter ? `
+            <button id="arc-customize" class="arc-btn arc-btn-outline" aria-label="${this.escapeHtml(customizeText)}">
+              ${this.escapeHtml(customizeText)}
+            </button>
+          ` : ''}
+        </div>
+      `;
+      
+      document.body.appendChild(banner);
+    }
+    
+    createPreferenceCenter() {
+      if (document.getElementById('arc-preference-center')) return;
+      
+      const modal = document.createElement('div');
+      modal.id = 'arc-preference-center';
+      modal.setAttribute('role', 'dialog');
+      modal.setAttribute('aria-labelledby', 'arc-modal-title');
+      modal.setAttribute('aria-hidden', 'true');
+      
+      const purposes = this.formData?.purposes || [];
+      const currentConsent = this.consent?.purposes || [];
+      
+      modal.innerHTML = `
+        <div class="arc-modal-content">
+          <div class="arc-modal-header">
+            <h2 id="arc-modal-title" class="arc-modal-title">Privacy Preferences</h2>
+            <button id="arc-close-preferences" class="arc-close-btn" aria-label="Close preferences">×</button>
+          </div>
+          <div class="arc-modal-body">
+            <p>Manage your cookie and privacy preferences. You can change these settings at any time.</p>
+            ${purposes.map(purpose => {
+              const isConsented = currentConsent.find(c => c.purposeId === purpose.id)?.consented || false;
+              const isRequired = purpose.required || false;
+              
+              return `
+                <div class="arc-purpose-item">
+                  <div class="arc-purpose-header">
+                    <div>
+                      <h4 class="arc-purpose-title">
+                        ${this.escapeHtml(purpose.name)}
+                        ${isRequired ? '<span style="color: #dc3545;"> *</span>' : ''}
+                      </h4>
+                      <p class="arc-purpose-description">${this.escapeHtml(purpose.description || '')}</p>
+                    </div>
+                    <label class="arc-toggle">
+                      <input type="checkbox" 
+                             class="arc-purpose-toggle" 
+                             data-purpose-id="${purpose.id}"
+                             ${isConsented ? 'checked' : ''}
+                             ${isRequired ? 'disabled' : ''}
+                             aria-label="Toggle ${this.escapeHtml(purpose.name)}">
+                      <span class="arc-toggle-slider"></span>
+                    </label>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+          <div class="arc-modal-footer">
+            <button id="arc-save-preferences" class="arc-btn arc-btn-primary">
+              Save Preferences
+            </button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+    }
+    
+    setupEventListeners() {
+      // Banner buttons
+      const acceptAllBtn = document.getElementById('arc-accept-all');
+      const rejectAllBtn = document.getElementById('arc-reject-all');
+      const customizeBtn = document.getElementById('arc-customize');
+      
+      if (acceptAllBtn) {
+        acceptAllBtn.addEventListener('click', () => this.acceptAll());
+      }
+      
+      if (rejectAllBtn) {
+        rejectAllBtn.addEventListener('click', () => this.rejectAll());
+      }
+      
+      if (customizeBtn) {
+        customizeBtn.addEventListener('click', () => {
+          this.hideBanner();
+          this.showPreferenceCenter();
+        });
+      }
+      
+      // Preference center buttons
+      const saveBtn = document.getElementById('arc-save-preferences');
+      const closeBtn = document.getElementById('arc-close-preferences');
+      
+      if (saveBtn) {
+        saveBtn.addEventListener('click', () => this.savePreferences());
+      }
+      
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => this.hidePreferenceCenter());
+      }
+
+      // Language Selector Listener
+      const langSelect = document.getElementById('arc-lang-select');
+      if (langSelect) {
+          langSelect.addEventListener('change', (e) => {
+              this.setLanguage(e.target.value);
+          });
+      }
+      
+      // Modal backdrop click
+      const modal = document.getElementById('arc-preference-center');
+      if (modal) {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            this.hidePreferenceCenter();
+          }
+        });
+      }
+      
+      // Keyboard navigation
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          const modal = document.getElementById('arc-preference-center');
+          if (modal && modal.style.display === 'flex') {
+            this.hidePreferenceCenter();
+          }
+        }
+      });
+    }
+    
+    savePreferences() {
+      const checkboxes = document.querySelectorAll('.arc-purpose-toggle');
+      const purposes = Array.from(checkboxes).map(cb => ({
+        purposeId: cb.dataset.purposeId,
+        consented: cb.checked
+      }));
+      
+      this.saveConsent(purposes);
+      this.hidePreferenceCenter();
+      this.unblockCookies();
+      this.dispatchConsentEvent('preferences-saved', { purposes });
+    }
+    
+    dispatchConsentEvent(eventType, data = {}) {
+      const event = new CustomEvent('arc-consent', {
+        detail: {
+          type: eventType,
+          data: data,
+          timestamp: new Date().toISOString()
+        }
+      });
+      
+      window.dispatchEvent(event);
+    }
+    
+    escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    
+    // Public API methods
+    getConsent() {
+      return this.consent;
+    }
+    
+    hasConsent(purposeId) {
+      if (!this.consent) return false;
+      const purpose = this.consent.purposes.find(p => p.purposeId === purposeId);
+      return purpose ? purpose.consented : false;
+    }
+    
+    revokeConsent() {
+      localStorage.removeItem('arc_consent');
+      this.consent = null;
+      this.showBanner();
+      this.dispatchConsentEvent('consent-revoked');
+    }
+    
+    showPreferences() {
+      this.showPreferenceCenter();
+    }
+
+    openForm() {
+      this.showPreferenceCenter();
+    }
+
+    bindConsent(elementId, purposeId) {
+      const element = document.getElementById(elementId);
+      if (!element) {
+        console.warn(`ARC Consent: Element with ID ${elementId} not found`);
+        return;
+      }
+
+      // Handle checkbox/toggle inputs
+      if (element.type === 'checkbox') {
+        // Set initial state
+        element.checked = this.hasConsent(purposeId);
+        
+        // Listen for changes
+        element.addEventListener('change', (e) => {
+          const purposes = [{
+            purposeId: purposeId,
+            consented: e.target.checked
+          }];
+          
+          // We need to merge with existing consent to avoid overwriting other purposes
+          if (this.consent && this.consent.purposes) {
+            const existing = this.consent.purposes.filter(p => p.purposeId !== purposeId);
+            purposes.push(...existing);
+          }
+          
+          this.saveConsent(purposes);
+          this.unblockCookies(); // Re-evaluate cookies
+        });
+      } else {
+        // For non-checkbox elements, maybe toggle class or click handler?
+        // For now, assume it's a trigger to toggle consent
+        element.addEventListener('click', () => {
+          const current = this.hasConsent(purposeId);
+          const purposes = [{
+            purposeId: purposeId,
+            consented: !current
+          }];
+           // Merge logic...
+           if (this.consent && this.consent.purposes) {
+            const existing = this.consent.purposes.filter(p => p.purposeId !== purposeId);
+            purposes.push(...existing);
+          }
+          this.saveConsent(purposes);
+          this.unblockCookies();
+        });
+      }
+    }
+
+    scanForBindings() {
+      const elements = document.querySelectorAll('[data-arc-consent]');
+      elements.forEach(el => {
+        const purposeId = el.getAttribute('data-arc-consent');
+        if (purposeId) {
+          // If element has ID, use bindConsent, else duplicate logic
+          if (el.id) {
+            this.bindConsent(el.id, purposeId);
+          } else {
+            // Assign temp ID or just bind directly
+            // Direct binding logic (duplicated from bindConsent for now)
+             if (el.type === 'checkbox') {
+                el.checked = this.hasConsent(purposeId);
+                el.addEventListener('change', (e) => {
+                  const purposes = [{
+                    purposeId: purposeId,
+                    consented: e.target.checked
+                  }];
+                  if (this.consent && this.consent.purposes) {
+                    const existing = this.consent.purposes.filter(p => p.purposeId !== purposeId);
+                    purposes.push(...existing);
+                  }
+                  this.saveConsent(purposes);
+                  this.unblockCookies();
+                });
+             }
+          }
+        }
+      });
+    }
+  }
+  
+  // Initialize on DOM ready
+  function initializeSDK() {
+    if (window.ARCConsent) {
+      console.warn('ARC Consent SDK already initialized');
+      return;
+    }
+    
+    window.ARCConsent = new ConsentManager(CONFIG);
+    
+    // Expose public API
+    window.ARCConsent.getConsent = window.ARCConsent.getConsent.bind(window.ARCConsent);
+    window.ARCConsent.hasConsent = window.ARCConsent.hasConsent.bind(window.ARCConsent);
+    window.ARCConsent.revokeConsent = window.ARCConsent.revokeConsent.bind(window.ARCConsent);
+    window.ARCConsent.showPreferences = window.ARCConsent.showPreferences.bind(window.ARCConsent);
+    window.ARCConsent.openForm = window.ARCConsent.openForm.bind(window.ARCConsent);
+    window.ARCConsent.bindConsent = window.ARCConsent.bindConsent.bind(window.ARCConsent);
+    window.ARCConsent.setLanguage = window.ARCConsent.setLanguage.bind(window.ARCConsent);
+  }
+  
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeSDK);
+  } else {
+    initializeSDK();
+  }
+})();

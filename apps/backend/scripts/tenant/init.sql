@@ -1,0 +1,2 @@
+-- Placeholder for tenant DB initialization
+-- Database is created via POSTGRES_DB env var
