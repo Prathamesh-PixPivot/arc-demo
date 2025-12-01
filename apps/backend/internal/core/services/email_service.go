@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
+	"strings"
 	"time"
 
 	"gopkg.in/gomail.v2"
@@ -17,17 +19,34 @@ var (
 )
 
 type EmailService struct {
-	dialer *gomail.Dialer
-	from   string
+	dialer   *gomail.Dialer
+	from     string
+	mockMode bool // ✅ ADDED: Flag to enable local mocking
 }
 
 func NewEmailService(host string, port int, username, password, from string) *EmailService {
+	// ✅ ADDED: Auto-detect if we should run in Mock Mode
+	if host == "" || username == "" || password == "" {
+		log.Println("[EmailService] ⚠️ SMTP credentials missing. Running in MOCK MODE (Emails will be logged to stdout)")
+		return &EmailService{
+			dialer:   nil,
+			from:     from,
+			mockMode: true,
+		}
+	}
+
 	dialer := gomail.NewDialer(host, port, username, password)
-	return &EmailService{dialer: dialer, from: from}
+	return &EmailService{dialer: dialer, from: from, mockMode: false}
 }
 
 // TestConnection validates SMTP configuration by attempting to connect
 func (s *EmailService) TestConnection() error {
+	// ✅ ADDED: Mock Mode check
+	if s.mockMode {
+		log.Println("[EmailService] TestConnection: Skipping connection check (Mock Mode Active)")
+		return nil
+	}
+
 	d, err := s.dialer.Dial()
 	if err != nil {
 		if isAuthError(err) {
@@ -41,6 +60,12 @@ func (s *EmailService) TestConnection() error {
 
 // Send sends an email with retry logic (up to 3 attempts)
 func (s *EmailService) Send(to, subject, body string) error {
+	// ✅ ADDED: Mock Mode Handler
+	if s.mockMode {
+		log.Printf("📧 [MOCK EMAIL] To: %s | Subject: %s\nBody: %s\n---------------------------------------------------", to, subject, body)
+		return nil
+	}
+
 	m := gomail.NewMessage()
 	m.SetHeader("From", s.from)
 	m.SetHeader("To", to)
@@ -51,6 +76,12 @@ func (s *EmailService) Send(to, subject, body string) error {
 }
 
 func (s *EmailService) SendEmailWithAttachment(to, subject, body string, attachment []byte, filename string) error {
+	// ✅ ADDED: Mock Mode Handler
+	if s.mockMode {
+		log.Printf("📧 [MOCK EMAIL + ATTACHMENT] To: %s | Subject: %s | File: %s\n---------------------------------------------------", to, subject, filename)
+		return nil
+	}
+
 	m := gomail.NewMessage()
 	m.SetHeader("From", s.from)
 	m.SetHeader("To", to)
@@ -101,30 +132,8 @@ func isAuthError(err error) bool {
 	}
 	errStr := err.Error()
 	// Common SMTP auth error patterns
-	return contains(errStr, "535") || // Authentication failed
-		contains(errStr, "535 5.7.8") || // Bad credentials
-		contains(errStr, "auth") ||
-		contains(errStr, "authentication")
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) &&
-		(hasPrefix(s, substr) || hasSuffix(s, substr) || containsSubstr(s, substr)))
-}
-
-func hasPrefix(s, prefix string) bool {
-	return len(s) >= len(prefix) && s[0:len(prefix)] == prefix
-}
-
-func hasSuffix(s, suffix string) bool {
-	return len(s) >= len(suffix) && s[len(s)-len(suffix):] == suffix
-}
-
-func containsSubstr(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
+	return strings.Contains(errStr, "535") || // Authentication failed
+		strings.Contains(errStr, "535 5.7.8") || // Bad credentials
+		strings.Contains(errStr, "auth") ||
+		strings.Contains(errStr, "authentication")
 }

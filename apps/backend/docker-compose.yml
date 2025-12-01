@@ -5,12 +5,11 @@ services:
     container_name: postgres-master
     restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB_MASTER}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: master
     ports:
       - "5432:5432"
-    volumes:
       - master_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
@@ -23,12 +22,11 @@ services:
     container_name: postgres-us-east
     restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB_US_EAST}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: us-east
     ports:
       - "5433:5432"
-    volumes:
       - us_east_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
@@ -41,12 +39,11 @@ services:
     container_name: postgres-eu-west
     restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB_EU_WEST}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: eu-west
     ports:
       - "5434:5432"
-    volumes:
       - eu_west_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
@@ -55,13 +52,12 @@ services:
 
   # ✅ Main Consent API Server
   consent-server:
-    platform: linux/amd64
-    image: rain210/arc-backend:latest
-    # build:
-      # context: .
-      # dockerfile: Dockerfile
+    build: .
     container_name: consent-manager
     restart: always
+    # 🔑 CRITICAL: Load environment variables from .env file
+    env_file: 
+      - .env
     depends_on:
       postgres-master:
         condition: service_healthy
@@ -71,104 +67,7 @@ services:
         condition: service_healthy
     ports:
       - "8080:8080"
-    environment:
-      PORT: ${PORT}
-      DATABASE_URL: ${DATABASE_URL}
-      DATABASE_US_EAST: ${DATABASE_US_EAST}
-      DATABASE_EU_WEST: ${DATABASE_EU_WEST}
-      JWT_SECRET: ${JWT_SECRET}
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
-      DEBUG_ADMIN_SECRET: ${DEBUG_ADMIN_SECRET}
-      ADMIN_TOKEN_TTL: ${ADMIN_TOKEN_TTL}
-      USER_TOKEN_TTL: ${USER_TOKEN_TTL}
-    working_dir: /app
-    command: "/app/bin/server"
-
-  # 🔁 Retry Worker (Webhook Retry Queue)
-  retry-worker:
-    image: rain210/arc-backend:latest
-    # build:
-    #   context: .
-    container_name: retry-worker
-    depends_on:
-      postgres-master:
-        condition: service_healthy
-    environment:
-      DATABASE_URL: ${DATABASE_URL}
-    command: "/app/bin/retry-worker"
-
-  # 🛠️ DB Migration Job
-  migrate:
-    image: rain210/arc-backend:latest
-    # build:
-    #   context: .
-    container_name: migrate
-    depends_on:
-      postgres-master:
-        condition: service_healthy
-    environment:
-      DATABASE_URL: ${DATABASE_URL}
-    command: "/app/bin/migrate"
-    restart: "no"
-  
-  consent-cli:
-    image: rain210/arc-backend:latest
-    # build:
-    #   context: .
-    #   dockerfile: Dockerfile
-    container_name: consent-cli
-    depends_on:
-      postgres-master:
-        condition: service_healthy
-    environment:
-      DATABASE_URL: ${DATABASE_URL}
-      DATABASE_US_EAST: ${DATABASE_US_EAST}
-      DATABASE_EU_WEST: ${DATABASE_EU_WEST}
-    working_dir: /app
-    entrypoint: /bin/sh
-    tty: true
-    stdin_open: true
-    command: ["-c", "echo '💡 Use docker exec -it consent-cli /app/bin/consentctl --help' && sleep infinity"]
-
-  # 🔐 API Key Generator
-  genkey:
-    image: rain210/arc-backend:latest
-    # build:
-    #   context: .
-    container_name: genkey
-    environment:
-      DATABASE_URL: ${DATABASE_URL}
-    command: "/app/bin/genkey"
-    restart: "no"
-
-  # 🧪 Optional: pgAdmin for debugging
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
-    ports:
-      - "5050:5050"
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-    depends_on:
-      - postgres-master
-      - postgres-us-east
-      - postgres-eu-west
-
-  # 🛠️ Setup tenant tool
-  setup-tenant:
-    image: rain210/arc-backend:latest
-    # build: .
-    command: "/app/bin/setup-tenant"
-    environment:
-      TENANT_NAME: Acme Corp
-      TENANT_CLUSTER: us-east
-      DATABASE_URL: ${DATABASE_URL}
-      DATABASE_US_EAST: ${DATABASE_US_EAST}
-      DATABASE_EU_WEST: ${DATABASE_EU_WEST}
-    restart: "no"
+      # Mount Keys and Docs
 
 volumes:
   master_data:
